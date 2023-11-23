@@ -244,10 +244,9 @@ fun PagerAnimateToItem() {
             mutableStateOf(0)
         };
         val pagerState = rememberPagerState(0)
-        currentPage = 0
         val myContext = LocalContext.current
 
-        HorizontalPager(state = pagerState, pageCount = 3) { page ->
+        HorizontalPager(state = pagerState, pageCount = 3, userScrollEnabled = false) { page ->
             // Our page content
             when (page) {
                 0 -> {
@@ -272,7 +271,13 @@ fun PagerAnimateToItem() {
         }
         Button(onClick = {
             if (s == "Finish") {
-                CoroutineScope(Dispatchers.IO).launch {
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    store.saveToken("Done")
+//                }
+                // there's a chance that a coroutine does not update the datastore before the UI
+                // thread checks it, so it is possible that the onboarding is run twice
+                // use blocking instead
+                runBlocking(Dispatchers.IO) {
                     store.saveToken("Done")
                 }
                 val intent = Intent(myContext, MainActivity::class.java)
