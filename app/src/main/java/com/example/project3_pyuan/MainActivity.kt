@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.project3_pyuan.ui.theme.Project3pyuanTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -250,11 +251,11 @@ fun PagerAnimateToItem() {
             // Our page content
             when (page) {
                 0 -> {
-                    weight = page("Test", "test")
+                    weight = page("Please enter your weight")
                     Log.w("Weight", weight.toString())
                 }
-                1 -> page("stuff", "stuff")
-                2 -> page("zebra", "test")
+                1 -> page("stuff")
+                2 -> page("zebra")
             }
 //            Text(
 //                text = "Page: $page",
@@ -322,7 +323,7 @@ fun PagerAnimateToItem() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun page(heading: String, subtext: String) : Int {
+fun page(heading: String) : Int {
     val context = LocalContext.current // strange that we have to put it up here
     var weight by remember {
         mutableStateOf("")
@@ -333,8 +334,12 @@ fun page(heading: String, subtext: String) : Int {
         modifier = Modifier
             .fillMaxSize()
     ) {
-        Text(text = heading)
-        Text(text = subtext)
+        Text(
+            text = heading,
+            fontSize = 30.sp,
+            modifier = Modifier
+                .padding(bottom = 30.dp)
+        )
         TextField(
             value = weight,
             label = {Text("Weight in lbs.")},
