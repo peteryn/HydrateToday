@@ -1,5 +1,6 @@
 package com.example.project3_pyuan
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -56,6 +57,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val store = UserStore(this)
+        val day = store.getDay
+        var dayValue = 0
+        runBlocking {
+            dayValue = day.first()
+        }
+
 
         setContent {
             Project3pyuanTheme {
@@ -66,9 +73,18 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val onBoardingStatusFlow = store.getOnboardingStatus
                     val onboardingStatus: Boolean
+//                    val day = store.getDay.collectAsState(initial = 0)
+//                    val dayValue = day.value
+                    val today = secondsToDay((System.currentTimeMillis()/1000).toInt())
+                    Log.w("INFO", dayValue.toString())
+                    Log.w("INFO", today.toString())
                     runBlocking(Dispatchers.IO) {
                         onboardingStatus = onBoardingStatusFlow.first()
-                    }
+                        if (dayValue < today) {
+                            store.saveDay(today)
+                            store.setTodayWater(0)
+                        }
+                   }
                     if (onboardingStatus) {
                         Layout()
                     } else {
@@ -79,7 +95,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val dbHelper: DatabaseOpenHelper = DatabaseOpenHelper(this)
-  }
+    }
 }
 
 
@@ -113,14 +129,17 @@ fun LayoutPreview() {
 fun Layout() {
     Project3pyuanTheme {
         val context = LocalContext.current
-        val tokenValue = remember {
-            mutableStateOf(TextFieldValue())
-        }
+        val tokenValue = remember { mutableStateOf(TextFieldValue())}
         val store = UserStore(context)
         val weight = store.getUserWeight.collectAsState(initial = "")
         val activityLevel = store.getUserActivityLevel.collectAsState(initial = "")
         val waterGoalState = store.getUserWaterGoal.collectAsState(initial = "")
         val waterGoal = waterGoalState.value
+
+        val day = store.getDay.collectAsState(initial = 0)
+//        var day by remember { mutableStateOf(getDay(System.currentTimeMillis() / 1000)) }
+        val currentWater = store.getTodayWater.collectAsState(initial = 0)
+        val waterDrunk = currentWater.value
 
         Column(
             modifier = Modifier
@@ -132,42 +151,57 @@ fun Layout() {
                     .align(Alignment.CenterHorizontally)
             ) {
                 Text(
-                    text = "Water Goal: $waterGoal oz",
+                    text = "Goal: $waterGoal oz",
                     fontSize = 30.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                 )
             }
-            Row(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(text = "Second row")
-                Text(text = weight.value.toString())
-                Text(text = activityLevel.value.toString())
-//                Text(text = waterGoal.value.toString())
+                Text(text = "Water drunk so far: $waterDrunk")
+                Button(onClick = {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        store.saveDay(0)
+                        store.saveOnboardingStatus(false)
+                    }
+                }) {
+                    Text(text = "Clear day")
+                }
             }
             Row() {
                 Column(
                     modifier = Modifier
                         .weight(1f)
                 ) {
-                    DrinkButton(name = "Water")
-                    DrinkButton(name = "Food")
+                    DrinkButton(name = "Cup of water", 8, currentWater.value, store)
+//                    DrinkButton(name = "Food")
                 }
                 Column(
                     modifier = Modifier
                         .weight(1f)
                 ) {
-                    DrinkButton(name = "Coffee")
-                    DrinkButton(name = "Jello")
+//                    DrinkButton(name = "Coffee")
+//                    DrinkButton(name = "Jello")
                 }
             }
         }
     }
 }
 
+fun secondsToDay(timestamp: Int): Int {
+//    return (timestamp / (60 * 60 * 24))
+    return (timestamp / (60))
+}
+
 @Composable
-fun DrinkButton(name: String) {
+fun DrinkButton(name: String, waterDrunk: Int, currentWater: Int, store: UserStore) {
     Button(
-        onClick = { /*TODO*/ },
+        onClick = {
+            CoroutineScope(Dispatchers.IO).launch {
+                store.setTodayWater(waterDrunk + currentWater)
+            }
+        },
         modifier = Modifier
             .fillMaxWidth()
     ) {

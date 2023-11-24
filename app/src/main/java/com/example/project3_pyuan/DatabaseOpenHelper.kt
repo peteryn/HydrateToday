@@ -1,6 +1,7 @@
 package com.example.project3_pyuan
 
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
@@ -14,7 +15,6 @@ class DatabaseOpenHelper(context: Context) : SQLiteOpenHelper(context, "HydrateD
     override fun onCreate(db: SQLiteDatabase) {
         val createHydrateTable: String = "CREATE TABLE $hydrateTable ($date INTEGER, $waterConsumed INTEGER);"
         db.execSQL(createHydrateTable)
-        val createUserTable: String = "CREATE TABLE $"
 //        Log.w("INFO", "Worked")
 
 //        val values: ContentValues = ContentValues()
@@ -27,12 +27,12 @@ class DatabaseOpenHelper(context: Context) : SQLiteOpenHelper(context, "HydrateD
         TODO("Not yet implemented")
     }
 
-    fun test() {
+    fun readTodayVal(): Int {
         val db: SQLiteDatabase  = this.readableDatabase
-        val returnVal = db.query(hydrateTable, hydrateColumns, null, null, null, null, null)
-        returnVal.moveToFirst()
-        val test = returnVal.getInt(0)
-        Log.w("INFO", "$test")
-        returnVal.close()
+        val cursor = db.query(hydrateTable, hydrateColumns, null, null, null, null, null)
+        cursor.moveToFirst()
+        val x = cursor.getInt(0)
+        cursor.close()
+        return x
     }
 }
