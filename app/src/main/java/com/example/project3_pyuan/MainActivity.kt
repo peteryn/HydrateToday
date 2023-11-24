@@ -7,7 +7,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +24,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -35,13 +40,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.project3_pyuan.onboarding.pages.page0
+import com.example.project3_pyuan.onboarding.pages.page1
 import com.example.project3_pyuan.ui.theme.Project3pyuanTheme
+import com.example.project3_pyuan.ui.theme.Purple80
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -135,6 +144,8 @@ fun Layout() {
         }
         val store = UserStore(context)
         val tokenText = store.getAccessToken.collectAsState(initial = "")
+        val weight = store.getUserWeight.collectAsState(initial = "")
+        val activityLevel = store.getUserActivityLevel.collectAsState(initial = "")
 
 //        val flowValue: String
 //        runBlocking(Dispatchers.IO) {
@@ -165,6 +176,8 @@ fun Layout() {
             }
             Row(modifier = Modifier.weight(1f)) {
                 Text(text = "Second row")
+                Text(text = weight.value.toString())
+                Text(text = activityLevel.value.toString())
             }
             Row() {
                 Column(
@@ -233,14 +246,24 @@ fun AlertDialogExample(
 fun PagerAnimateToItem() {
     val context = LocalContext.current
     val store = UserStore(context)
-    var weight by remember {
-        mutableStateOf(0)
+    var weight by remember { mutableStateOf(-1) }
+    var activityLevel by remember { mutableStateOf(-1) }
+
+
+    // code to animate from https://stackoverflow.com/questions/73466994/how-to-make-button-background-color-change-animatedly-when-enabled-changes
+    var isButtonEnabled by remember {
+        mutableStateOf(false)
     }
+    val animatedButtonColor = animateColorAsState(
+        targetValue = if (isButtonEnabled) MaterialTheme.colorScheme.primary else Color.Gray,
+        animationSpec = tween(500, 0, LinearEasing), label = ""
+    )
+
+
     Box (
         modifier = Modifier
             .fillMaxWidth()
     ){
-        // [START android_compose_layouts_pager_scroll_animate]
         var currentPage by remember {
             mutableStateOf(0)
         };
@@ -251,18 +274,15 @@ fun PagerAnimateToItem() {
             // Our page content
             when (page) {
                 0 -> {
-                    weight = page("Please enter your weight")
-                    Log.w("Weight", weight.toString())
+                    weight = page0("Please enter your weight", weight)
+                    isButtonEnabled = weight != -1
                 }
-                1 -> page("stuff")
+                1 -> {
+                    activityLevel = page1("Please select your activity level")
+                    isButtonEnabled = activityLevel != -1
+                }
                 2 -> page("zebra")
             }
-//            Text(
-//                text = "Page: $page",
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(100.dp)
-//            )
         }
 
         // scroll to page
@@ -270,7 +290,16 @@ fun PagerAnimateToItem() {
         var s by remember {
             mutableStateOf("Next")
         }
-        Button(onClick = {
+
+
+
+        Button(
+            colors = ButtonDefaults.buttonColors(
+                containerColor = animatedButtonColor.value,
+                disabledContainerColor = animatedButtonColor.value,
+            ),
+            enabled = isButtonEnabled,
+            onClick = {
             if (s == "Finish") {
 //                CoroutineScope(Dispatchers.IO).launch {
 //                    store.saveToken("Done")
@@ -293,16 +322,26 @@ fun PagerAnimateToItem() {
                         pagerState.animateScrollToPage(currentPage)
                     }
                 }
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    store.saveWeight(weight)
+                    store.saveActivityLevel(activityLevel)
+                }
             }
-        }, modifier = Modifier.align(Alignment.BottomEnd)) {
+        }, modifier = Modifier
+            .align(Alignment.BottomEnd)) {
             if (currentPage == 2) {
                 s = "Finish"
             }
             else {
                 s = "Next"
             }
-            Text(s);
+            Text(s)
         }
+
+
+
+
         if (currentPage != 0) {
             Button(onClick = {
                 coroutineScope.launch {

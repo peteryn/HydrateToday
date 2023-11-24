@@ -24,37 +24,41 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.project3_pyuan.R
 import java.lang.NumberFormatException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun page0(heading: String, subtext: String) : Int {
+fun page0(heading: String, currentWeight: Int): Int {
     val context = LocalContext.current // strange that we have to put it up here
     var weight by remember {
-        mutableStateOf("")
+        mutableStateOf(if (currentWeight == -1) {""} else {currentWeight.toString()})
     }
     Column (
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
     ) {
-        Text(text = heading)
-        Text(text = subtext)
+        Text(
+            text = heading,
+            fontSize = 30.sp,
+            modifier = Modifier
+                .padding(bottom = 30.dp)
+        )
         TextField(
             value = weight,
-            label = { Text("Weight in lbs.") },
+            label = {Text("Weight in lbs.")},
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             onValueChange = {
-                if (it.contains(".") || it.contains("-") || it.contains(" ") ||
-                    it.contains(",") || it.contains("\n")) {
+                if (it.contains(".") || it.contains("-") || it.contains(" ") || it.contains(",") || it.contains("\n")) {
                     // do nothing
                 } else {
                     try {
                         it.toInt()
                         weight = it
                     } catch (e: NumberFormatException) {
-                        // toast displaying stuff
                         weight = ""
                         if (it.isNotEmpty()) {
                             Toast.makeText(context, "Please enter a smaller weight", Toast.LENGTH_LONG).show()
@@ -64,8 +68,8 @@ fun page0(heading: String, subtext: String) : Int {
             }
         )
     }
-    if (weight.toString().isEmpty()) {
-        return 0
+    if (weight.isEmpty() || weight.toInt() == 0) {
+        return -1
     }
 
     return weight.toInt()
