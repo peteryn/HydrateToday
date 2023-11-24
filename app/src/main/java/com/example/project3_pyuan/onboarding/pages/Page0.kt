@@ -30,7 +30,7 @@ import java.lang.NumberFormatException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun page0(heading: String, currentWeight: Int): Int {
+fun page0(currentWeight: Int): Int {
     val context = LocalContext.current // strange that we have to put it up here
     var weight by remember {
         mutableStateOf(if (currentWeight == -1) {""} else {currentWeight.toString()})
@@ -42,7 +42,7 @@ fun page0(heading: String, currentWeight: Int): Int {
             .fillMaxSize()
     ) {
         Text(
-            text = heading,
+            text = "Please enter your weight",
             fontSize = 30.sp,
             modifier = Modifier
                 .padding(bottom = 30.dp)
@@ -51,6 +51,7 @@ fun page0(heading: String, currentWeight: Int): Int {
             value = weight,
             label = {Text("Weight in lbs.")},
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            // TODO: make it so that user cant enter more than x digits
             onValueChange = {
                 if (it.contains(".") || it.contains("-") || it.contains(" ") || it.contains(",") || it.contains("\n")) {
                     // do nothing

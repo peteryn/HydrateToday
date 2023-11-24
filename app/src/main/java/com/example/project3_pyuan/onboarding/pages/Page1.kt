@@ -30,7 +30,7 @@ import java.lang.NumberFormatException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun page1(heading: String) : Int {
+fun page1() : Int {
     val context = LocalContext.current // strange that we have to put it up here
     var expanded by remember {
         mutableStateOf(false)
@@ -46,8 +46,9 @@ fun page1(heading: String) : Int {
             .fillMaxSize()
     ) {
         Text(
-            text = heading,
+            text = "Please select your activity level",
             textAlign = TextAlign.Center,
+            lineHeight = 40.sp,
             fontSize = 30.sp,
             modifier = Modifier
                 .padding(bottom = 30.dp)

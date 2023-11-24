@@ -49,10 +49,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.project3_pyuan.onboarding.pages.page0
 import com.example.project3_pyuan.onboarding.pages.page1
+import com.example.project3_pyuan.onboarding.pages.page3
 import com.example.project3_pyuan.ui.theme.Project3pyuanTheme
 import com.example.project3_pyuan.ui.theme.Purple80
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -146,6 +148,7 @@ fun Layout() {
         val tokenText = store.getAccessToken.collectAsState(initial = "")
         val weight = store.getUserWeight.collectAsState(initial = "")
         val activityLevel = store.getUserActivityLevel.collectAsState(initial = "")
+        val waterGoal = store.getUserWaterGoal.collectAsState(initial = "")
 
 //        val flowValue: String
 //        runBlocking(Dispatchers.IO) {
@@ -178,6 +181,7 @@ fun Layout() {
                 Text(text = "Second row")
                 Text(text = weight.value.toString())
                 Text(text = activityLevel.value.toString())
+                Text(text = waterGoal.value.toString())
             }
             Row() {
                 Column(
@@ -248,6 +252,7 @@ fun PagerAnimateToItem() {
     val store = UserStore(context)
     var weight by remember { mutableStateOf(-1) }
     var activityLevel by remember { mutableStateOf(-1) }
+    var waterGoal by remember { mutableStateOf(-1) }
 
 
     // code to animate from https://stackoverflow.com/questions/73466994/how-to-make-button-background-color-change-animatedly-when-enabled-changes
@@ -274,14 +279,16 @@ fun PagerAnimateToItem() {
             // Our page content
             when (page) {
                 0 -> {
-                    weight = page0("Please enter your weight", weight)
+                    weight = page0(weight)
                     isButtonEnabled = weight != -1
                 }
                 1 -> {
-                    activityLevel = page1("Please select your activity level")
+                    activityLevel = page1()
                     isButtonEnabled = activityLevel != -1
                 }
-                2 -> page("zebra")
+                2 -> {
+                    waterGoal = page3(weight, activityLevel)
+                }
             }
         }
 
@@ -326,6 +333,7 @@ fun PagerAnimateToItem() {
                 CoroutineScope(Dispatchers.IO).launch {
                     store.saveWeight(weight)
                     store.saveActivityLevel(activityLevel)
+                    store.saveUserWaterGoal(waterGoal)
                 }
             }
         }, modifier = Modifier
@@ -338,9 +346,6 @@ fun PagerAnimateToItem() {
             }
             Text(s)
         }
-
-
-
 
         if (currentPage != 0) {
             Button(onClick = {
@@ -356,57 +361,5 @@ fun PagerAnimateToItem() {
                 Text("Back")
             }
         }
-        // [END android_compose_layouts_pager_scroll_animate]
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun page(heading: String) : Int {
-    val context = LocalContext.current // strange that we have to put it up here
-    var weight by remember {
-        mutableStateOf("")
-    }
-    Column (
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Text(
-            text = heading,
-            fontSize = 30.sp,
-            modifier = Modifier
-                .padding(bottom = 30.dp)
-        )
-        TextField(
-            value = weight,
-            label = {Text("Weight in lbs.")},
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            onValueChange = {
-                if (it.contains(".") || it.contains("-") || it.contains(" ") || it.contains(",") || it.contains("\n")) {
-                    // do nothing
-                } else {
-                    try {
-                        Log.w("INFO", "In try")
-                        it.toInt()
-                        Log.w("INFO", "Past first check")
-                        weight = it
-                        Log.w("INFO", "Weight should be updated")
-                    } catch (e: NumberFormatException) {
-                        // toast displaying stuff
-                        weight = ""
-                        if (it.isNotEmpty()) {
-                            Toast.makeText(context, "Please enter a smaller weight", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
-            }
-        )
-    }
-    if (weight.toString().isEmpty()) {
-        return 0
-    }
-
-    return weight.toInt()
 }
