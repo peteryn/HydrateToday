@@ -1,6 +1,5 @@
 package com.example.project3_pyuan
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -10,6 +9,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,14 +18,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -39,8 +37,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.project3_pyuan.onboarding.pages.page0
 import com.example.project3_pyuan.onboarding.pages.page1
 import com.example.project3_pyuan.onboarding.pages.page3
@@ -64,7 +64,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-//                    Greeting("Android")
                     val onBoardingStatusFlow = store.getOnboardingStatus
                     val onboardingStatus: Boolean
                     runBlocking(Dispatchers.IO) {
@@ -73,7 +72,7 @@ class MainActivity : ComponentActivity() {
                     if (onboardingStatus) {
                         Layout()
                     } else {
-                        PagerAnimateToItem()
+                        OnboardingScreen()
                     }
                 }
             }
@@ -81,24 +80,6 @@ class MainActivity : ComponentActivity() {
 
         val dbHelper: DatabaseOpenHelper = DatabaseOpenHelper(this)
   }
-
-    fun getInfo() {
-        val builder: AlertDialog.Builder = AlertDialog.Builder(this)
-        builder
-            .setTitle("I am the title")
-            .setPositiveButton("Positive") { dialog, which ->
-                // Do something.
-            }
-            .setNegativeButton("Negative") { dialog, which ->
-                // Do something else.
-            }
-            .setItems(arrayOf("Item One", "Item Two", "Item Three")) { dialog, which ->
-                // Do something on item tapped.
-            }
-
-        val dialog: AlertDialog = builder.create()
-        dialog.show()
-    }
 }
 
 
@@ -136,38 +117,32 @@ fun Layout() {
             mutableStateOf(TextFieldValue())
         }
         val store = UserStore(context)
-        val onboardingStatus = store.getOnboardingStatus.collectAsState(initial = false)
         val weight = store.getUserWeight.collectAsState(initial = "")
         val activityLevel = store.getUserActivityLevel.collectAsState(initial = "")
-        val waterGoal = store.getUserWaterGoal.collectAsState(initial = "")
-
-//        val flowValue: String
-//        runBlocking(Dispatchers.IO) {
-//            flowValue = store.getAccessToken.first()
-//        }
-
+        val waterGoalState = store.getUserWaterGoal.collectAsState(initial = "")
+        val waterGoal = waterGoalState.value
 
         Column(
             modifier = Modifier
                 .padding(4.dp)
         ) {
 
-            Row() {
-                TextField(
-                    value = tokenValue.value,
-                    onValueChange = { tokenValue.value = it },
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = "Water Goal: $waterGoal oz",
+                    fontSize = 30.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
                 )
-                Button(
-                    onClick = {}
-                ) {
-                    Text("Update")
-                }
             }
             Row(modifier = Modifier.weight(1f)) {
                 Text(text = "Second row")
                 Text(text = weight.value.toString())
                 Text(text = activityLevel.value.toString())
-                Text(text = waterGoal.value.toString())
+//                Text(text = waterGoal.value.toString())
             }
             Row() {
                 Column(
@@ -200,40 +175,10 @@ fun DrinkButton(name: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AlertDialogExample(
-    onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    dialogTitle: String,
-    dialogText: String,
-) {
-    AlertDialog(
-        title = {
-            Text(text = dialogTitle)
-        },
-        text = {
-            Text(text = dialogText)
-        },
-        onDismissRequest = {
-            onDismissRequest()
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirmation()
-                }
-            ) {
-                Text("Confirm")
-            }
-        },
-    )
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
-fun PagerAnimateToItem() {
+fun OnboardingScreen() {
     val context = LocalContext.current
     val store = UserStore(context)
     var weight by remember { mutableStateOf(-1) }
@@ -242,9 +187,7 @@ fun PagerAnimateToItem() {
 
 
     // code to animate from https://stackoverflow.com/questions/73466994/how-to-make-button-background-color-change-animatedly-when-enabled-changes
-    var isButtonEnabled by remember {
-        mutableStateOf(false)
-    }
+    var isButtonEnabled by remember { mutableStateOf(false) }
     val animatedButtonColor = animateColorAsState(
         targetValue = if (isButtonEnabled) MaterialTheme.colorScheme.primary else Color.Gray,
         animationSpec = tween(500, 0, LinearEasing), label = ""
@@ -284,8 +227,6 @@ fun PagerAnimateToItem() {
             mutableStateOf("Next")
         }
 
-
-
         Button(
             colors = ButtonDefaults.buttonColors(
                 containerColor = animatedButtonColor.value,
@@ -294,9 +235,6 @@ fun PagerAnimateToItem() {
             enabled = isButtonEnabled,
             onClick = {
             if (s == "Finish") {
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    store.saveToken("Done")
-//                }
                 // there's a chance that a coroutine does not update the datastore before the UI
                 // thread checks it, so it is possible that the onboarding is run twice
                 // use blocking instead
