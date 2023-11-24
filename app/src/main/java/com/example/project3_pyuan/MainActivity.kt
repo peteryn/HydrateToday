@@ -4,15 +4,12 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,23 +38,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.project3_pyuan.onboarding.pages.page0
 import com.example.project3_pyuan.onboarding.pages.page1
 import com.example.project3_pyuan.onboarding.pages.page3
 import com.example.project3_pyuan.ui.theme.Project3pyuanTheme
-import com.example.project3_pyuan.ui.theme.Purple80
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.lang.NumberFormatException
 
 class MainActivity : ComponentActivity() {
 
@@ -74,15 +65,15 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 //                    Greeting("Android")
-                    val myFlow = store.getAccessToken
-                    val flowValue: String
+                    val onBoardingStatusFlow = store.getOnboardingStatus
+                    val onboardingStatus: Boolean
                     runBlocking(Dispatchers.IO) {
-                        flowValue = myFlow.first()
+                        onboardingStatus = onBoardingStatusFlow.first()
                     }
-                    if (flowValue.isEmpty()) {
-                        PagerAnimateToItem()
-                    } else {
+                    if (onboardingStatus) {
                         Layout()
+                    } else {
+                        PagerAnimateToItem()
                     }
                 }
             }
@@ -145,7 +136,7 @@ fun Layout() {
             mutableStateOf(TextFieldValue())
         }
         val store = UserStore(context)
-        val tokenText = store.getAccessToken.collectAsState(initial = "")
+        val onboardingStatus = store.getOnboardingStatus.collectAsState(initial = false)
         val weight = store.getUserWeight.collectAsState(initial = "")
         val activityLevel = store.getUserActivityLevel.collectAsState(initial = "")
         val waterGoal = store.getUserWaterGoal.collectAsState(initial = "")
@@ -162,17 +153,12 @@ fun Layout() {
         ) {
 
             Row() {
-                Text(text = tokenText.value)
                 TextField(
                     value = tokenValue.value,
                     onValueChange = { tokenValue.value = it },
                 )
                 Button(
-                    onClick = {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            store.saveToken(tokenValue.value.text)
-                        }
-                    }
+                    onClick = {}
                 ) {
                     Text("Update")
                 }
@@ -315,7 +301,7 @@ fun PagerAnimateToItem() {
                 // thread checks it, so it is possible that the onboarding is run twice
                 // use blocking instead
                 runBlocking(Dispatchers.IO) {
-                    store.saveToken("Done")
+                    store.saveOnboardingStatus(true)
                 }
                 val intent = Intent(myContext, MainActivity::class.java)
                 myContext.startActivity(intent)
