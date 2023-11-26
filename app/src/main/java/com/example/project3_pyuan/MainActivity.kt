@@ -107,30 +107,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store: UserStore) {
     Project3pyuanTheme {
+        // set the state with the values passed in
         var waterDrunk by remember { mutableStateOf(waterDrunkPassed) }
         var percentageToGoal by remember { mutableStateOf(min(1.0F, waterDrunk.toFloat()/waterGoal)) }
 
+        // make sure state is synchronized
         waterDrunk = (store.getTodayWater.collectAsState(initial = 0)).value
         percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
 
         Column(
             modifier = Modifier
-//                .padding(4.dp)
         ) {
-//            Button(onClick = {
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    store.saveDay(0)
-//                    store.saveOnboardingStatus(false)
-//                    store.clearAll()
-//                }
-//            }) {
-//                Text(text = "Clear day")
-//            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-            ) {
-            }
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -163,14 +150,6 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                             .align(Alignment.BottomCenter)
                     )
                 }
-
-//                OutlinedButton(
-//                    onClick = {
-//                        if (progress < 1f) progress += 0.1f
-//                    }
-//                ) {
-//                    Text("Increase")
-//                }
             }
             Row(
                 modifier = Modifier
