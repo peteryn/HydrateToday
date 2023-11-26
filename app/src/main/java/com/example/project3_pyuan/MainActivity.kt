@@ -56,20 +56,20 @@ class MainActivity : ComponentActivity() {
                     val store = UserStore(this)
 
                     val dayFlow = store.getDay
-                    var dayValue = 0
+                    var dayValue: Int
                     val today = secondsToDay((System.currentTimeMillis()/1000).toInt())
 
                     val waterDrunkFlow = store.getTodayWater
-                    var waterDrunkValue = 0
+                    var waterDrunkValue: Int
 
                     val onBoardingStatusFlow = store.getOnboardingStatus
                     val onboardingStatusValue: Boolean
 
                     val waterGoalFlow = store.getUserWaterGoal
-                    var waterGoalValue = 0
+                    var waterGoalValue: Int
 
                     val currentStreak = store.getCurrentStreak
-                    var currentStreakValue = 0
+                    var currentStreakValue: Int
 
                     runBlocking(Dispatchers.IO) {
                         // get all values
@@ -115,20 +115,16 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
         waterDrunk = (store.getTodayWater.collectAsState(initial = 0)).value
         percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
 
-        Column(
-            modifier = Modifier
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-            ) {
+        Column() {
+            Column(modifier = Modifier.weight(1f)) {
+                // Code is from
+                // https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#LinearProgressIndicator(kotlin.Float,androidx.compose.ui.Modifier,androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.StrokeCap)
+                // Used to animate water progress
                 val animatedProgress by animateFloatAsState(
                     targetValue = percentageToGoal,
                     animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec, label = ""
                 )
-
                 Box(modifier = Modifier.fillMaxSize()) {
-
                     Text(
                         text = "$waterGoal oz",
                         fontSize = 40.sp,
@@ -151,17 +147,8 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                     )
                 }
             }
-            Row(
-                modifier = Modifier
-                    .padding(5.dp)
-            ) {
-                var p by remember { mutableStateOf(Percentage(0F))}
-                p.percentage = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-//                    waterDrunk = DrinkButton(name = "Cup of water", 8, waterDrunk, store)
+            Row(modifier = Modifier.padding(5.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
                     Button(
                         onClick = {
                             waterDrunk += 8
@@ -201,14 +188,7 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                         )
                     }
                 }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-//                    DrinkButton(name = "Coffee", 4, waterDrunk, store, p) {
-//                        p = p.copy(percentage = p.percentage + 4)
-//                    }
-//                    DrinkButton(name = "Jello")
+                Column(modifier = Modifier.weight(1f)) {
                     Button(
                         onClick = {
                             waterDrunk += 8
@@ -249,12 +229,7 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                     }
 
                 }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-//                    DrinkButton(name = "Coffee")
-//                    DrinkButton(name = "Jello")
+                Column(modifier = Modifier.weight(1f)) {
                     Button(
                         onClick = {
                             waterDrunk += 8
@@ -316,8 +291,8 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
 }
 
 fun secondsToDay(timestamp: Int): Int {
-//    return (timestamp / (60 * 60 * 24))
-    return (timestamp / (60))
+//    return (timestamp / (60 * 60 * 24)) // for when a day lasts for 24 hours
+    return (timestamp / (60)) // for when a day lasts for 1 minute
 }
 
 @Composable
