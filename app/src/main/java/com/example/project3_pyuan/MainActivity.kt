@@ -7,23 +7,38 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.animateRectAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -36,10 +51,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -159,6 +178,21 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
 
 //        waterDrunkState = waterDrunk
 
+        val percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
+
+        // Get local density from composable
+        val localDensity = LocalDensity.current
+
+        // Create element height in pixel state
+        var columnHeightPx by remember {
+            mutableStateOf(0f)
+        }
+
+        // Create element height in dp state
+        var columnHeightDp by remember {
+            mutableStateOf(0.dp)
+        }
+
 
         Column(
             modifier = Modifier
@@ -176,11 +210,19 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                     modifier = Modifier
                 )
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Second row")
-                Text(text = "Water drunk so far: $waterDrunk")
-                Text(text = "Streak: $currentStreakValue")
-                Button(onClick = {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .onGloballyPositioned { coordinates ->
+                        // Set column height using the LayoutCoordinates
+                        columnHeightPx = coordinates.size.height.toFloat()
+                        columnHeightDp = with(localDensity) { coordinates.size.height.toDp() }
+                    }
+            ) {
+//                Text(text = "Second row")
+//                Text(text = "Water drunk so far: $waterDrunk")
+//                Text(text = "Streak: $currentStreakValue")
+                Button(modifier = Modifier.rotate(180f), onClick = {
                     CoroutineScope(Dispatchers.IO).launch {
                         store.saveDay(0)
                         store.saveOnboardingStatus(false)
@@ -189,23 +231,62 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                 }) {
                     Text(text = "Clear day")
                 }
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val canvasWidth = size.width
-                    val canvasHeight = size.height
-                    Log.w("Water Drunk", waterDrunk.toString())
-                    Log.w("Water Goal", waterGoal.toString())
-                    val percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                    Log.w("percentage", percentageToGoal.toString())
-                    val height = percentageToGoal * canvasHeight
-                    val drinked = Size(canvasWidth / 5F, height)
-//                    val drinked = Size(canvasWidth / 5F, canvasHeight)
-                    drawRect(
-                        color = Color.Red,
-                        size = drinked,
-//                        topLeft = Offset(x = (canvasWidth/2) - (drinked.width / 2), y = 0.toFloat())
-                        topLeft = Offset(x = (canvasWidth/2) - (drinked.width / 2), y = size.height - height)
-                    )
+
+                val height = columnHeightDp.value * percentageToGoal
+                val oh = columnHeightDp.value - height
+//                LinearProgressIndicator()
+
+                var progress by remember { mutableStateOf(0.1f) }
+                val animatedProgress by animateFloatAsState(
+                    targetValue = progress,
+                    animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+                )
+
+                Row(modifier = Modifier.rotate(270f)) {
+                    LinearProgressIndicator(progress = animatedProgress)
+                    Spacer(Modifier.requiredHeight(30.dp))
+                    OutlinedButton(
+                        onClick = {
+                            if (progress < 1f) progress += 0.1f
+                        }
+                    ) {
+                        Text("Increase")
+                    }
                 }
+
+                Box(
+                    modifier = Modifier
+                        .offset(0.dp, oh.dp)
+                        .rotate(0f)
+                        .background(Color.Red)
+                        .animateContentSize()
+                        .height((-1 * height).dp)
+                        .width(200.dp)
+//                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                        }
+                ) {
+                }
+//                Canvas(modifier = Modifier.fillMaxSize()) {
+//                    val canvasWidth = size.width
+//                    val canvasHeight = size.height
+//                    Log.w("Water Drunk", waterDrunk.toString())
+//                    Log.w("Water Goal", waterGoal.toString())
+//                    val percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
+//                    Log.w("percentage", percentageToGoal.toString())
+//                    val height = percentageToGoal * canvasHeight
+//                    val drinked = Size(canvasWidth / 5F, height)
+////                    val drinked = Size(canvasWidth / 5F, canvasHeight)
+//                    drawRect(
+//                        color = Color.Red,
+//                        size = drinked,
+////                        topLeft = Offset(x = (canvasWidth/2) - (drinked.width / 2), y = 0.toFloat())
+//                        topLeft = Offset(x = (canvasWidth/2) - (drinked.width / 2), y = size.height - height)
+//                    )
+//                }
             }
             Row() {
                 Column(
