@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 
 class UserStore(private val context: Context) {
     companion object {
-        private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("userToken")
+        private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("userInfo")
         private val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         private val USER_WEIGHT = intPreferencesKey("user_weight")
         private val USER_ACTIVITY_LEVEL = intPreferencesKey("user_activity_level")
@@ -22,6 +22,12 @@ class UserStore(private val context: Context) {
         private val DAY = intPreferencesKey("day")
         private val USER_CURRENT_STREAK = intPreferencesKey("user_current_streak")
         private val USER_BEST_STREAK = intPreferencesKey("user_best_streak")
+    }
+
+    suspend fun clearAll() {
+        context.dataStore.edit {
+            it.clear()
+        }
     }
 
     val getOnboardingStatus: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -37,15 +43,19 @@ class UserStore(private val context: Context) {
     }
 
     val getUserWaterGoal: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[USER_WATER_GOAL] ?: -1
+        preferences[USER_WATER_GOAL] ?: 0
     }
 
     val getTodayWater: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[TODAY_WATER] ?: 0
+        preferences[TODAY_WATER] ?: -1
     }
 
     val getDay: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[DAY] ?: 0
+    }
+
+    val getCurrentStreak: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[USER_CURRENT_STREAK] ?: 0
     }
 
     suspend fun saveOnboardingStatus(status: Boolean) {
@@ -81,6 +91,12 @@ class UserStore(private val context: Context) {
     suspend fun saveDay(day: Int) {
         context.dataStore.edit { preferences ->
             preferences[DAY] = day
+        }
+    }
+
+    suspend fun saveStreak(newStreak: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[USER_CURRENT_STREAK] = newStreak
         }
     }
 }

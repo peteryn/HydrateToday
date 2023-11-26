@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,9 +36,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,6 +53,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.lang.Float.min
 
 class MainActivity : ComponentActivity() {
 
@@ -59,8 +62,11 @@ class MainActivity : ComponentActivity() {
         val store = UserStore(this)
         val day = store.getDay
         var dayValue = 0
+        val waterDrunk = store.getTodayWater
+        var waterDrunkValue = 0
         runBlocking {
             dayValue = day.first()
+            waterDrunkValue = waterDrunk.first()
         }
 
 
@@ -73,20 +79,29 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val onBoardingStatusFlow = store.getOnboardingStatus
                     val onboardingStatus: Boolean
-//                    val day = store.getDay.collectAsState(initial = 0)
-//                    val dayValue = day.value
                     val today = secondsToDay((System.currentTimeMillis()/1000).toInt())
+                    val waterGoal = store.getUserWaterGoal
+                    var waterGoalValue = 0
+                    val currentStreak = store.getCurrentStreak
+                    var currentStreakValue = 0
                     Log.w("INFO", dayValue.toString())
                     Log.w("INFO", today.toString())
                     runBlocking(Dispatchers.IO) {
                         onboardingStatus = onBoardingStatusFlow.first()
+                        waterGoalValue = waterGoal.first()
+                        currentStreakValue = currentStreak.first()
                         if (dayValue < today) {
                             store.saveDay(today)
+                            if (waterDrunkValue >= waterGoalValue) {
+                                store.saveStreak(currentStreakValue + 1)
+                            } else {
+                                store.saveStreak(0)
+                            }
                             store.setTodayWater(0)
                         }
                    }
                     if (onboardingStatus) {
-                        Layout()
+                        Layout(waterGoalValue, waterDrunkValue, currentStreakValue, store)
                     } else {
                         OnboardingScreen()
                     }
@@ -116,30 +131,34 @@ fun GreetingPreview() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun LayoutPreview() {
-    Project3pyuanTheme {
-        Layout()
-    }
-}
+//@Composable
+//fun LayoutPreview() {
+//    Project3pyuanTheme {
+//        Layout()
+//    }
+//}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Layout() {
+fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store: UserStore) {
     Project3pyuanTheme {
         val context = LocalContext.current
-        val tokenValue = remember { mutableStateOf(TextFieldValue())}
-        val store = UserStore(context)
-        val weight = store.getUserWeight.collectAsState(initial = "")
-        val activityLevel = store.getUserActivityLevel.collectAsState(initial = "")
-        val waterGoalState = store.getUserWaterGoal.collectAsState(initial = "")
-        val waterGoal = waterGoalState.value
+        var waterDrunk by remember{ mutableStateOf(waterDrunkPassed) }
+//        val store = UserStore(context)
+//        val waterGoalState = store.getUserWaterGoal.collectAsState(initial = 1)
+//        val waterGoal = waterGoalState.value
+//
+//        var waterDrunkState by remember { mutableStateOf(0)}
+//
+//        val day = store.getDay.collectAsState(initial = 0)
+////        var day by remember { mutableStateOf(getDay(System.currentTimeMillis() / 1000)) }
+//        val currentWater = store.getTodayWater.collectAsState(initial = 0)
+//        val waterDrunk = currentWater.value
+//        val currentStreak = store.getCurrentStreak.collectAsState(initial = 0)
+//        val currentStreakValue = currentStreak.value
 
-        val day = store.getDay.collectAsState(initial = 0)
-//        var day by remember { mutableStateOf(getDay(System.currentTimeMillis() / 1000)) }
-        val currentWater = store.getTodayWater.collectAsState(initial = 0)
-        val waterDrunk = currentWater.value
+//        waterDrunkState = waterDrunk
+
 
         Column(
             modifier = Modifier
@@ -160,13 +179,32 @@ fun Layout() {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = "Second row")
                 Text(text = "Water drunk so far: $waterDrunk")
+                Text(text = "Streak: $currentStreakValue")
                 Button(onClick = {
                     CoroutineScope(Dispatchers.IO).launch {
                         store.saveDay(0)
                         store.saveOnboardingStatus(false)
+                        store.clearAll()
                     }
                 }) {
                     Text(text = "Clear day")
+                }
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val canvasWidth = size.width
+                    val canvasHeight = size.height
+                    Log.w("Water Drunk", waterDrunk.toString())
+                    Log.w("Water Goal", waterGoal.toString())
+                    val percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
+                    Log.w("percentage", percentageToGoal.toString())
+                    val height = percentageToGoal * canvasHeight
+                    val drinked = Size(canvasWidth / 5F, height)
+//                    val drinked = Size(canvasWidth / 5F, canvasHeight)
+                    drawRect(
+                        color = Color.Red,
+                        size = drinked,
+//                        topLeft = Offset(x = (canvasWidth/2) - (drinked.width / 2), y = 0.toFloat())
+                        topLeft = Offset(x = (canvasWidth/2) - (drinked.width / 2), y = size.height - height)
+                    )
                 }
             }
             Row() {
@@ -174,8 +212,19 @@ fun Layout() {
                     modifier = Modifier
                         .weight(1f)
                 ) {
-                    DrinkButton(name = "Cup of water", 8, currentWater.value, store)
-//                    DrinkButton(name = "Food")
+//                    waterDrunk = DrinkButton(name = "Cup of water", 8, waterDrunk, store)
+                    Button(
+                        onClick = {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                store.setTodayWater(8 + waterDrunk)
+                            }
+                            waterDrunk += 8
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = "Cup of water\n8 oz")
+                    }
                 }
                 Column(
                     modifier = Modifier
@@ -191,7 +240,7 @@ fun Layout() {
 
 fun secondsToDay(timestamp: Int): Int {
 //    return (timestamp / (60 * 60 * 24))
-    return (timestamp / (60))
+    return (timestamp / (60 * 5))
 }
 
 @Composable
