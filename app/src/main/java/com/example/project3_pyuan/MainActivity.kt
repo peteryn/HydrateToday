@@ -3,6 +3,7 @@ package com.example.project3_pyuan
 import android.health.connect.datatypes.units.Percentage
 import android.os.Bundle
 import android.util.Log
+import android.widget.GridLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
@@ -13,6 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +49,7 @@ import java.lang.Float.min
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val debug = false
         setContent {
             Project3pyuanTheme {
                 // A surface container using the 'background' color from the theme
@@ -56,7 +61,7 @@ class MainActivity : ComponentActivity() {
 
                     val dayFlow = store.getDay
                     var dayValue: Int
-                    val today = secondsToDay((System.currentTimeMillis()/1000).toInt())
+                    val today = secondsToDay((System.currentTimeMillis()/1000).toInt(), debug)
 
                     val waterDrunkFlow = store.getTodayWater
                     var waterDrunkValue: Int
@@ -92,7 +97,7 @@ class MainActivity : ComponentActivity() {
                         }
                    }
                     if (onboardingStatusValue) {
-                        Layout(waterGoalValue, waterDrunkValue, currentStreakValue, store)
+                        Layout(waterGoalValue, waterDrunkValue, currentStreakValue, store, debug)
                     } else {
                         OnboardingScreen()
                     }
@@ -106,7 +111,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store: UserStore) {
+fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store: UserStore, debug: Boolean) {
     Project3pyuanTheme {
         // set the state with the values passed in
         var waterDrunk by remember { mutableStateOf(waterDrunkPassed) }
@@ -126,6 +131,19 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                     animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec, label = ""
                 )
                 Box(modifier = Modifier.fillMaxSize()) {
+                    if (debug) {
+                        Button(
+                            modifier = Modifier.align(Alignment.CenterStart),
+                            onClick = {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                store.saveDay(-1)
+                                store.saveOnboardingStatus(false)
+                                store.clearAll()
+                            }
+                        }) {
+                            Text(text = "Reset App")
+                        }
+                    }
                     Text(
                         text = "$waterGoal oz",
                         fontSize = 40.sp,
@@ -148,205 +166,90 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                     )
                 }
             }
-            Row(modifier = Modifier.padding(5.dp)) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Button(
-                        onClick = {
-                            waterDrunk += 8
-                            CoroutineScope(Dispatchers.IO).launch {
-                                store.setTodayWater(waterDrunk)
-                            }
-                            percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                        },
-                        shape = RoundedCornerShape(20),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(5.dp)
-                    ) {
-                        Text(
-                            text = "Cup of Water\n8 oz",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            waterDrunk += 8
-                            CoroutineScope(Dispatchers.IO).launch {
-                                store.setTodayWater(waterDrunk)
-                            }
-                            percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                        },
-                        shape = RoundedCornerShape(20),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(5.dp)
-                    ) {
-                        Text(
-                            text = "Cup of Water\n8 oz",
-                            textAlign = TextAlign.Center
-                        )
-                    }
+
+            Row(modifier = Modifier.padding(4.dp)) {
+                val updateWater: (Int) -> Unit = { itemAmountOfWater ->
+                    waterDrunk += itemAmountOfWater
+                    percentageToGoal = min(1.0F, waterDrunk.toFloat() / waterGoal)
                 }
+                // left column
                 Column(modifier = Modifier.weight(1f)) {
-                    Button(
-                        onClick = {
-                            waterDrunk += 8
-                            CoroutineScope(Dispatchers.IO).launch {
-                                store.setTodayWater(waterDrunk)
-                            }
-                            percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                        },
-                        shape = RoundedCornerShape(20),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(5.dp)
-                    ) {
-                        Text(
-                            text = "Cup of Water\n8 oz",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            waterDrunk += 8
-                            CoroutineScope(Dispatchers.IO).launch {
-                                store.setTodayWater(waterDrunk)
-                            }
-                            percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                        },
-                        shape = RoundedCornerShape(20),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(5.dp)
-                    ) {
-                        Text(
-                            text = "Cup of Water\n8 oz",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
+                    DrinkButton(
+                        name = "Cup of Water",
+                        itemAmountOfWater = 8,
+                        waterDrunk = waterDrunk,
+                        store = store,
+                        updateWater = updateWater
+                    )
+                    DrinkButton(
+                        name = "Bottle of Water",
+                        itemAmountOfWater = 17,
+                        waterDrunk = waterDrunk,
+                        store = store,
+                        updateWater = updateWater
+                    )
                 }
+                // middle column
                 Column(modifier = Modifier.weight(1f)) {
-                    Button(
-                        onClick = {
-                            waterDrunk += 8
-                            CoroutineScope(Dispatchers.IO).launch {
-                                store.setTodayWater(waterDrunk)
-                            }
-                            percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                        },
-                        shape = RoundedCornerShape(20),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(5.dp)
-                    ) {
-                        Text(
-                            text = "Cup of Water\n8 oz",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-//                    Button(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .height(100.dp)
-//                            .padding(5.dp),
-//                        shape = RoundedCornerShape(20),
-//                        onClick = {
-//                        CoroutineScope(Dispatchers.IO).launch {
-//                            store.saveDay(0)
-//                            store.saveOnboardingStatus(false)
-//                            store.clearAll()
-//                        }
-//                    }) {
-//                        Text(text = "Clear day")
-//                    }
-
-//                    var test by remember { mutableStateOf("") }
-//                    hoist(name = test) {
-//                        test = "spring"
-//                        Log.w("INFO", test)
-//                    }
-                    DrinkButton(name = "Can of Soda", itemAmountOfWater = 12, waterDrunk = waterDrunk, store = store) {itemAmountOfWater ->
-                        waterDrunk += itemAmountOfWater
-                        percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-                    }
-
-//                    Button(
-//                        onClick = {
-//                            CoroutineScope(Dispatchers.IO).launch {
-//                                store.setTodayWater(8 + waterDrunk)
-//                            }
-//                            waterDrunk += 8
-//                            percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
-//                        },
-//                        shape = RoundedCornerShape(20),
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .height(100.dp)
-//                            .padding(5.dp)
-//                    ) {
-//                        Text(
-//                            text = "Cup of Water\n8 oz",
-//                            textAlign = TextAlign.Center
-//                        )
-//                    }
-
+                    DrinkButton(
+                        name = "Cup of Coffee",
+                        itemAmountOfWater = 7,
+                        waterDrunk = waterDrunk,
+                        store = store,
+                        updateWater = updateWater
+                    )
+                    DrinkButton(
+                        name = "Average Meal",
+                        itemAmountOfWater = 15,
+                        waterDrunk = waterDrunk,
+                        store = store,
+                        updateWater = updateWater
+                    )
+                }
+                // right column
+                Column(modifier = Modifier.weight(1f)) {
+                    DrinkButton(
+                        name = "Can of Soda",
+                        itemAmountOfWater = 11,
+                        waterDrunk = waterDrunk,
+                        store = store,
+                        updateWater = updateWater
+                    )
+                    DrinkButton(
+                        name = "Slice of Watermelon",
+                        itemAmountOfWater = 6,
+                        waterDrunk = waterDrunk,
+                        store = store,
+                        updateWater = updateWater
+                    )
                 }
             }
         }
     }
 }
 
-@Composable
-fun hoist(name: String, update: () -> Unit) {
-    Button(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .padding(5.dp),
-        shape = RoundedCornerShape(20),
-        onClick = {
-            update()
-        }
-    ) {
-        Text(text = name)
+fun secondsToDay(timestamp: Int, debug: Boolean): Int {
+    return if (debug) {
+        (timestamp / (60)) // for when a day lasts for 1 minute
+    } else {
+        (timestamp / (60 * 60 * 24)) // for when a day lasts for 24 hours
     }
-}
-
-fun secondsToDay(timestamp: Int): Int {
-//    return (timestamp / (60 * 60 * 24)) // for when a day lasts for 24 hours
-    return (timestamp / (60)) // for when a day lasts for 1 minute
 }
 
 @Composable
 fun DrinkButton(name: String, itemAmountOfWater: Int, waterDrunk: Int, store: UserStore, updateWater: (Int) -> Unit) {
-//    Button(
-//        onClick = {
-//            CoroutineScope(Dispatchers.IO).launch {
-//                store.setTodayWater(waterDrunk + currentWater)
-//            }
-//            updateWater()
-//        },
-//        modifier = Modifier
-//            .fillMaxWidth()
-//    ) {
-//        Text(text = name)
-//    }
     Button(
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
-            .padding(5.dp),
+            .padding(4.dp),
         shape = RoundedCornerShape(20),
         onClick = {
+            // update the datastore
             CoroutineScope(Dispatchers.IO).launch {
                 store.setTodayWater(waterDrunk + itemAmountOfWater)
             }
+            // update the UI state
             updateWater(itemAmountOfWater)
         }
     ) {
