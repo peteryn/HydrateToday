@@ -1,6 +1,8 @@
 package com.example.project3_pyuan
 
+import android.health.connect.datatypes.units.Percentage
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloatAsState
@@ -40,10 +42,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.lang.Float.min
 
-data class Percentage(var percentage: Float = 0F)
-
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -102,6 +101,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -249,21 +250,32 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
                             textAlign = TextAlign.Center
                         )
                     }
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .padding(5.dp),
-                        shape = RoundedCornerShape(20),
-                        onClick = {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            store.saveDay(0)
-                            store.saveOnboardingStatus(false)
-                            store.clearAll()
-                        }
-                    }) {
-                        Text(text = "Clear day")
+//                    Button(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(100.dp)
+//                            .padding(5.dp),
+//                        shape = RoundedCornerShape(20),
+//                        onClick = {
+//                        CoroutineScope(Dispatchers.IO).launch {
+//                            store.saveDay(0)
+//                            store.saveOnboardingStatus(false)
+//                            store.clearAll()
+//                        }
+//                    }) {
+//                        Text(text = "Clear day")
+//                    }
+
+//                    var test by remember { mutableStateOf("") }
+//                    hoist(name = test) {
+//                        test = "spring"
+//                        Log.w("INFO", test)
+//                    }
+                    DrinkButton(name = "Can of Soda", itemAmountOfWater = 12, waterDrunk = waterDrunk, store = store) {itemAmountOfWater ->
+                        waterDrunk += itemAmountOfWater
+                        percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
                     }
+
 //                    Button(
 //                        onClick = {
 //                            CoroutineScope(Dispatchers.IO).launch {
@@ -290,23 +302,57 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreakValue: Int, store
     }
 }
 
+@Composable
+fun hoist(name: String, update: () -> Unit) {
+    Button(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .padding(5.dp),
+        shape = RoundedCornerShape(20),
+        onClick = {
+            update()
+        }
+    ) {
+        Text(text = name)
+    }
+}
+
 fun secondsToDay(timestamp: Int): Int {
 //    return (timestamp / (60 * 60 * 24)) // for when a day lasts for 24 hours
     return (timestamp / (60)) // for when a day lasts for 1 minute
 }
 
 @Composable
-fun DrinkButton(name: String, waterDrunk: Int, currentWater: Int, store: UserStore, percentage: Percentage, updateWater: () -> Unit) {
+fun DrinkButton(name: String, itemAmountOfWater: Int, waterDrunk: Int, store: UserStore, updateWater: (Int) -> Unit) {
+//    Button(
+//        onClick = {
+//            CoroutineScope(Dispatchers.IO).launch {
+//                store.setTodayWater(waterDrunk + currentWater)
+//            }
+//            updateWater()
+//        },
+//        modifier = Modifier
+//            .fillMaxWidth()
+//    ) {
+//        Text(text = name)
+//    }
     Button(
-        onClick = {
-            CoroutineScope(Dispatchers.IO).launch {
-                store.setTodayWater(waterDrunk + currentWater)
-            }
-            updateWater()
-        },
         modifier = Modifier
             .fillMaxWidth()
+            .height(100.dp)
+            .padding(5.dp),
+        shape = RoundedCornerShape(20),
+        onClick = {
+            CoroutineScope(Dispatchers.IO).launch {
+                store.setTodayWater(waterDrunk + itemAmountOfWater)
+            }
+            updateWater(itemAmountOfWater)
+        }
     ) {
-        Text(text = name)
+        Text(
+            text = "$name\n$itemAmountOfWater oz",
+            textAlign = TextAlign.Center
+        )
     }
 }
