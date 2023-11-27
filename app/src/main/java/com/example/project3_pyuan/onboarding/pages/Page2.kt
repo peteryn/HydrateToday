@@ -17,7 +17,7 @@ import java.lang.Math.round
 import kotlin.math.roundToInt
 
 @Composable
-fun page3(weight: Int, activityLevel: Int): Int {
+fun page2(weight: Int, activityLevel: Int): Int {
     val context = LocalContext.current // strange that we have to put it up here
     val waterGoal = (weight * 0.5).roundToInt() + ((activityLevel + 1) * 12)
     Column (

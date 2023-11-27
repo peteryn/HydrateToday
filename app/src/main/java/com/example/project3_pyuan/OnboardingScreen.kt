@@ -27,7 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.project3_pyuan.onboarding.pages.page0
 import com.example.project3_pyuan.onboarding.pages.page1
-import com.example.project3_pyuan.onboarding.pages.page3
+import com.example.project3_pyuan.onboarding.pages.page2
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,13 +69,16 @@ fun OnboardingScreen() {
                 0 -> {
                     weight = page0(weight)
                     isButtonEnabled = weight != -1
+                    Log.w("IN", page.toString())
                 }
                 1 -> {
                     activityLevel = page1()
                     isButtonEnabled = activityLevel != -1
+                    Log.w("IN", page.toString())
                 }
                 2 -> {
-                    waterGoal = page3(weight, activityLevel)
+                    waterGoal = page2(weight, activityLevel)
+                    Log.w("IN", page.toString())
                 }
             }
         }
