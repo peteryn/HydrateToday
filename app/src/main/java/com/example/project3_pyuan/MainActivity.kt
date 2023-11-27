@@ -54,6 +54,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val intent = intent
+                    val v = intent.getIntExtra("complete", -1)
                     val store = UserStore(this)
 
                     val dayFlow = store.getDay
@@ -92,7 +94,7 @@ class MainActivity : ComponentActivity() {
                             // reset the water for the new day
                             store.setTodayWater(0)
                         } else {
-                            if (onboardingStatusValue) {
+                            if (onboardingStatusValue && v == -1) {
                                 updateStreak = false
                             }
                         }

@@ -104,6 +104,7 @@ fun OnboardingScreen() {
                         store.saveOnboardingStatus(true)
                     }
                     val intent = Intent(myContext, MainActivity::class.java)
+                    intent.putExtra("complete", 0)
                     myContext.startActivity(intent)
                 }
                 else {
