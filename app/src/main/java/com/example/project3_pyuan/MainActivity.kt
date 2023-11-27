@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
@@ -72,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
                     val currentStreak = store.getCurrentStreak
                     var currentStreakValue: Int
-                    var updateStreak: Boolean = true
+                    var updateStreak = true
                     runBlocking(Dispatchers.IO) {
                         // get all values
                         dayValue = dayFlow.first()
@@ -111,7 +110,6 @@ class MainActivity : ComponentActivity() {
 
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreak: Int, store: UserStore, debug: Boolean, updateStreak: Boolean) {
     Project3pyuanTheme {
@@ -126,7 +124,7 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreak: Int, store: Use
         percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
         currentStreakState = store.getCurrentStreak.collectAsState(initial = 0).value
 
-        Column() {
+        Column {
             Column(modifier = Modifier.weight(1f)) {
                 // Code is from
                 // https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#LinearProgressIndicator(kotlin.Float,androidx.compose.ui.Modifier,androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.StrokeCap)
