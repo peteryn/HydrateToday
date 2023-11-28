@@ -41,12 +41,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import nl.dionsegijn.konfetti.compose.KonfettiView
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.Position
+import nl.dionsegijn.konfetti.core.emitter.Emitter
 import java.lang.Float.min
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val debug = true
+        val debug = false
         setContent {
             Project3pyuanTheme {
                 // A surface container using the 'background' color from the theme
@@ -120,12 +125,29 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreak: Int, store: Use
         var percentageToGoal by remember { mutableStateOf(min(1.0F, waterDrunk.toFloat()/waterGoal)) }
         var currentStreakState by remember { mutableStateOf(currentStreak) }
         var updateStreakValue by remember { mutableStateOf(updateStreak) }
+        var showConfetti by remember { mutableStateOf(false) }
 
         // make sure state is synchronized
         waterDrunk = store.getTodayWater.collectAsState(initial = 0).value
         percentageToGoal = min(1.0F, waterDrunk.toFloat()/waterGoal)
         currentStreakState = store.getCurrentStreak.collectAsState(initial = 0).value
 
+        // confetti code from https://github.com/DanielMartinus/Konfetti
+        val state = listOf(Party(
+            speed = 0f,
+            maxSpeed = 30f,
+            damping = 0.9f,
+            spread = 360,
+            colors = listOf(0xfce18a, 0xff726d, 0xf4306d, 0xb48def),
+            position = Position.Relative(0.5, 0.3),
+            emitter = Emitter(duration = 100, TimeUnit.MILLISECONDS).max(100)
+        ))
+        if (showConfetti) {
+            KonfettiView(
+                modifier = Modifier.fillMaxSize(),
+                parties = state,
+            )
+        }
         Column {
             Column(modifier = Modifier.weight(1f)) {
                 // Code is from
@@ -198,6 +220,7 @@ fun Layout(waterGoal: Int, waterDrunkPassed: Int, currentStreak: Int, store: Use
                             store.saveStreak(currentStreakState)
                         }
                         updateStreakValue = false
+                        showConfetti = true
                     }
                 }
                 // left column
