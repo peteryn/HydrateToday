@@ -44,7 +44,6 @@ fun OnboardingScreen() {
     var activityLevel by remember { mutableStateOf(-1) }
     var waterGoal by remember { mutableStateOf(-1) }
 
-
     // code to animate from https://stackoverflow.com/questions/73466994/how-to-make-button-background-color-change-animatedly-when-enabled-changes
     var isButtonEnabled by remember { mutableStateOf(false) }
     val animatedButtonColor = animateColorAsState(
@@ -52,14 +51,11 @@ fun OnboardingScreen() {
         animationSpec = tween(500, 0, LinearEasing), label = ""
     )
 
-
     Box (
         modifier = Modifier
             .fillMaxWidth()
     ){
-        var currentPage by remember {
-            mutableStateOf(0)
-        };
+        var currentPage by remember { mutableStateOf(0) }
         val pagerState = rememberPagerState(0)
         val myContext = LocalContext.current
 
@@ -69,16 +65,13 @@ fun OnboardingScreen() {
                 0 -> {
                     weight = page0(weight)
                     isButtonEnabled = weight != -1
-                    Log.w("IN", page.toString())
                 }
                 1 -> {
                     activityLevel = page1()
                     isButtonEnabled = activityLevel != -1
-                    Log.w("IN", page.toString())
                 }
                 2 -> {
                     waterGoal = page2(weight, activityLevel)
-                    Log.w("IN", page.toString())
                 }
             }
         }
@@ -89,6 +82,7 @@ fun OnboardingScreen() {
             mutableStateOf("Next")
         }
 
+        // next button
         Button(
             colors = ButtonDefaults.buttonColors(
                 containerColor = animatedButtonColor.value,
@@ -96,6 +90,7 @@ fun OnboardingScreen() {
             ),
             enabled = isButtonEnabled,
             onClick = {
+                // setup finish button
                 if (s == "Finish") {
                     // there's a chance that a coroutine does not update the datastore before the UI
                     // thread checks it, so it is possible that the onboarding is run twice
@@ -104,13 +99,12 @@ fun OnboardingScreen() {
                         store.saveOnboardingStatus(true)
                     }
                     val intent = Intent(myContext, MainActivity::class.java)
-                    intent.putExtra("complete", 0)
                     myContext.startActivity(intent)
                 }
+                // if not finish button, then move to next page
                 else {
                     coroutineScope.launch {
                         // Call scroll to on pagerState
-                        Log.w("INFO", currentPage.toString())
                         if (currentPage < 2) {
                             currentPage++
                             pagerState.animateScrollToPage(currentPage)
@@ -125,22 +119,22 @@ fun OnboardingScreen() {
                 }
             }, modifier = Modifier
                 .align(Alignment.BottomEnd)) {
-            if (currentPage == 2) {
-                s = "Finish"
-            }
-            else {
-                s = "Next"
+            s = if (currentPage == 2) {
+                "Finish"
+            } else {
+                "Next"
             }
             Text(s)
         }
 
+        // if we are any page besides the first, include a back button
         if (currentPage != 0) {
             Button(onClick = {
                 coroutineScope.launch {
                     Log.w("INFO", currentPage.toString())
                     // Call scroll to on pagerState
                     if (currentPage > 0) {
-                        currentPage--;
+                        currentPage--
                         pagerState.animateScrollToPage(currentPage)
                     }
                 }

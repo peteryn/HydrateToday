@@ -6,11 +6,12 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+// This implementation is from https://dev.to/ethand91/android-compose-datastore-tutorial-3bnl
+// I have adapted this to fit my project's needs
 class UserStore(private val context: Context) {
     companion object {
         private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("userInfo")
@@ -20,8 +21,6 @@ class UserStore(private val context: Context) {
         private val USER_WATER_GOAL = intPreferencesKey("user_water_goal")
         private val TODAY_WATER = intPreferencesKey("today_water")
         private val DAY = intPreferencesKey("day")
-        private val USER_CURRENT_STREAK = intPreferencesKey("user_current_streak")
-        private val USER_BEST_STREAK = intPreferencesKey("user_best_streak")
     }
 
     suspend fun clearAll() {
@@ -52,10 +51,6 @@ class UserStore(private val context: Context) {
 
     val getDay: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[DAY] ?: 0
-    }
-
-    val getCurrentStreak: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[USER_CURRENT_STREAK] ?: 0
     }
 
     suspend fun saveOnboardingStatus(status: Boolean) {
@@ -91,12 +86,6 @@ class UserStore(private val context: Context) {
     suspend fun saveDay(day: Int) {
         context.dataStore.edit { preferences ->
             preferences[DAY] = day
-        }
-    }
-
-    suspend fun saveStreak(newStreak: Int) {
-        context.dataStore.edit { preferences ->
-            preferences[USER_CURRENT_STREAK] = newStreak
         }
     }
 }

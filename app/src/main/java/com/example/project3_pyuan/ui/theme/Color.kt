@@ -2,6 +2,7 @@ package com.example.project3_pyuan.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// theme generated using https://m3.material.io/theme-builder#/custom
 val md_theme_light_primary = Color(0xFF1558C8)
 val md_theme_light_onPrimary = Color(0xFFFFFFFF)
 val md_theme_light_primaryContainer = Color(0xFFDAE2FF)
