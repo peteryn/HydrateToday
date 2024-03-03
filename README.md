@@ -1,7 +1,7 @@
 # HydrateToday
 
 ## Demo
-![Demo](https://github.com/peteryn/HydrateToday/blob/master/media/demo.gif?raw=true | width=100)
+<img src="https://github.com/peteryn/HydrateToday/blob/master/media/demo.gif?raw=true" width=100>
 
 ## Description
 HydrateToday is a water intake tracking application that helps you stay hydrated based on your weight and activity level. It provides personalized recommendations for daily water intake and allows you to track your progress.
